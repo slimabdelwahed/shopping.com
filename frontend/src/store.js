@@ -1,28 +1,39 @@
 import { createStore, combineReducers, applyMiddleware } from 'redux';
-import thunk from 'redux-thunk';
+import {thunk} from 'redux-thunk';
 import { composeWithDevTools } from 'redux-devtools-extension';
-import { productListReducer, productDetailsReducer } from './reducers/productReducers';
-import { userLoginReducer, userRegisterReducer } from './reducers/userReducers';
+import  userReducer  from './reducers/userReducers' ;
+import productReducer from './reducers/productReducers';
+import cartReducer from './reducers/cartReducer';
 
-const reducer = combineReducers({
-  productList: productListReducer,
-  productDetails: productDetailsReducer,
-  userLogin: userLoginReducer,
-  userRegister: userRegisterReducer,
+// Combinaison de tous les reducers
+const rootReducer = combineReducers({
+  user: userReducer,
+  productList: productReducer,
+  cart: cartReducer,
 });
 
+// Charger l'état du panier depuis localStorage (facultatif)
+const cartItemsFromStorage = localStorage.getItem('cartItems')
+  ? JSON.parse(localStorage.getItem('cartItems'))
+  : [];
+
+// Charger l'information de l'utilisateur connecté depuis localStorage
 const userInfoFromStorage = localStorage.getItem('userInfo')
   ? JSON.parse(localStorage.getItem('userInfo'))
   : null;
 
+// État initial de l'application
 const initialState = {
-  userLogin: { userInfo: userInfoFromStorage },
+  cart: { cartItems: cartItemsFromStorage },
+  user: { userInfo: userInfoFromStorage },
 };
 
+// Configuration de middleware avec thunk
 const middleware = [thunk];
 
+// Création du store avec les reducers, l'état initial et les outils de développement Redux
 const store = createStore(
-  reducer,
+  rootReducer,
   initialState,
   composeWithDevTools(applyMiddleware(...middleware))
 );

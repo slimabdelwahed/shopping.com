@@ -1,32 +1,52 @@
-import React, { useEffect } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
-import { listProducts } from '../actions/productActions';
-import Product from '../components/Product';
-import Loader from '../components/Loader';
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
+import { Link } from 'react-router-dom';
 
 const HomeScreen = () => {
-  const dispatch = useDispatch();
-
-  const productList = useSelector((state) => state.productList);
-  const { loading, products, error } = productList;
+  const [products, setProducts] = useState([]);
+  const [message, setMessage] = useState('');
 
   useEffect(() => {
-    dispatch(listProducts());
-  }, [dispatch]);
+    const fetchProducts = async () => {
+      try {
+        const { data } = await axios.get('/api/products');
+        setProducts(data);
+      } catch (error) {
+        setMessage('Erreur lors de la récupération des produits');
+      }
+    };
+
+    fetchProducts();
+  }, []);
+
+  const handleAddToCart = (product) => {
+    const cartItems = JSON.parse(localStorage.getItem('cartItems')) || [];
+    const existingItem = cartItems.find(item => item._id === product._id);
+
+    if (existingItem) {
+      existingItem.quantity += 1;
+    } else {
+      cartItems.push({ ...product, quantity: 1 });
+    }
+
+    localStorage.setItem('cartItems', JSON.stringify(cartItems));
+  };
 
   return (
     <div>
-      {loading ? (
-        <Loader />
-      ) : error ? (
-        <h2>{error}</h2>
-      ) : (
-        <div className="product-list">
-          {products.map((product) => (
-            <Product key={product._id} product={product} />
-          ))}
-        </div>
-      )}
+      <h1>Accueil</h1>
+      {message && <p>{message}</p>}
+      <div>
+        {products.map((product) => (
+          <div key={product._id}>
+            <Link to={`/product/${product._id}`}>
+              <h2>{product.name}</h2>
+            </Link>
+            <p>Prix: {product.price}€</p>
+            <button onClick={() => handleAddToCart(product)}>Ajouter au panier</button>
+          </div>
+        ))}
+      </div>
     </div>
   );
 };
